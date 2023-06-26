@@ -5,37 +5,40 @@
 name: Linux
 
 on:
-  push:
-    branches:
-    - master
-    - '*/ci'
-    paths-ignore:
-    - '**/*.md'
-    - '**/CMakeLists.txt'
-    - '.azure-pipelines.yml'
-    - '.circleci/**'
-    - '.cirrus.yml'
-    - 'appveyor.yml'
-    - 'CMake/**'
-    - 'packages/**'
-    - 'plan9/**'
-    - 'projects/**'
-    - 'winbuild/**'
-  pull_request:
-    branches:
-    - master
-    paths-ignore:
-    - '**/*.md'
-    - '**/CMakeLists.txt'
-    - '.azure-pipelines.yml'
-    - '.circleci/**'
-    - '.cirrus.yml'
-    - 'appveyor.yml'
-    - 'CMake/**'
-    - 'packages/**'
-    - 'plan9/**'
-    - 'projects/**'
-    - 'winbuild/**'
+  workflow_dispatch:
+  # schedule:
+  #   - cron: '0 1,5 * * *'
+  # push:
+  #   branches:
+  #   - master
+  #   - '*/ci'
+  #   paths-ignore:
+  #   - '**/*.md'
+  #   - '**/CMakeLists.txt'
+  #   - '.azure-pipelines.yml'
+  #   - '.circleci/**'
+  #   - '.cirrus.yml'
+  #   - 'appveyor.yml'
+  #   - 'CMake/**'
+  #   - 'packages/**'
+  #   - 'plan9/**'
+  #   - 'projects/**'
+  #   - 'winbuild/**'
+  # pull_request:
+  #   branches:
+  #   - master
+  #   paths-ignore:
+  #   - '**/*.md'
+  #   - '**/CMakeLists.txt'
+  #   - '.azure-pipelines.yml'
+  #   - '.circleci/**'
+  #   - '.cirrus.yml'
+  #   - 'appveyor.yml'
+  #   - 'CMake/**'
+  #   - 'packages/**'
+  #   - 'plan9/**'
+  #   - 'projects/**'
+  #   - 'winbuild/**'
 
 concurrency:
   # Hardcoded workflow filename as workflow name above is just Linux again
@@ -63,6 +66,11 @@ jobs:
           wolfssl-configure: --enable-opensslextra
 
     steps:
+    - name: Eco-CI Init
+      uses: green-coding-berlin/eco-ci-energy-estimation@v2
+      with:
+        task: start-measurement
+
     - run: |
         sudo apt-get update
         sudo apt-get install libtool autoconf automake pkg-config stunnel4 ${{ matrix.build.install }}
@@ -100,3 +108,16 @@ jobs:
       name: 'run tests'
       env:
         TFLAGS: "${{ matrix.build.tflags }}"
+
+    - name: Eco-CI Measurement
+      uses: green-coding-berlin/eco-ci-energy-estimation@v2
+      with:
+        task: get-measurement
+        label: 'wolfssl.yml - ${{ matrix.build.name }}'
+
+    - name: Eco-CI Results
+      uses: green-coding-berlin/eco-ci-energy-estimation@v2
+      with:
+        task: display-results
+
+

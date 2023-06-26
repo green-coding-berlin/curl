@@ -5,37 +5,40 @@
 name: ngtcp2
 
 on:
-  push:
-    branches:
-    - master
-    - '*/ci'
-    paths-ignore:
-    - '**/*.md'
-    - '**/CMakeLists.txt'
-    - '.azure-pipelines.yml'
-    - '.circleci/**'
-    - '.cirrus.yml'
-    - 'appveyor.yml'
-    - 'CMake/**'
-    - 'packages/**'
-    - 'plan9/**'
-    - 'projects/**'
-    - 'winbuild/**'
-  pull_request:
-    branches:
-    - master
-    paths-ignore:
-    - '**/*.md'
-    - '**/CMakeLists.txt'
-    - '.azure-pipelines.yml'
-    - '.circleci/**'
-    - '.cirrus.yml'
-    - 'appveyor.yml'
-    - 'CMake/**'
-    - 'packages/**'
-    - 'plan9/**'
-    - 'projects/**'
-    - 'winbuild/**'
+  workflow_dispatch:
+  # schedule:
+  #   - cron: '0 1,5 * * *'
+  # push:
+  #   branches:
+  #   - master
+  #   - '*/ci'
+  #   paths-ignore:
+  #   - '**/*.md'
+  #   - '**/CMakeLists.txt'
+  #   - '.azure-pipelines.yml'
+  #   - '.circleci/**'
+  #   - '.cirrus.yml'
+  #   - 'appveyor.yml'
+  #   - 'CMake/**'
+  #   - 'packages/**'
+  #   - 'plan9/**'
+  #   - 'projects/**'
+  #   - 'winbuild/**'
+  # pull_request:
+  #   branches:
+  #   - master
+  #   paths-ignore:
+  #   - '**/*.md'
+  #   - '**/CMakeLists.txt'
+  #   - '.azure-pipelines.yml'
+  #   - '.circleci/**'
+  #   - '.cirrus.yml'
+  #   - 'appveyor.yml'
+  #   - 'CMake/**'
+  #   - 'packages/**'
+  #   - 'plan9/**'
+  #   - 'projects/**'
+  #   - 'winbuild/**'
 
 concurrency:
   # Hardcoded workflow filename as workflow name above is just Linux again
@@ -64,6 +67,11 @@ jobs:
             --prefix=$HOME/all PKG_CONFIG_PATH="$HOME/all/lib/pkgconfig" --enable-lib-only
 
     steps:
+    - name: Eco-CI Init
+      uses: green-coding-berlin/eco-ci-energy-estimation@v2
+      with:
+        task: start-measurement
+
     - run: |
         sudo apt-get update
         sudo apt-get install libtool autoconf automake pkg-config stunnel4 ${{ matrix.build.install }}
@@ -140,3 +148,15 @@ jobs:
       name: 'run pytest'
       env:
         TFLAGS: "${{ matrix.build.tflags }}"
+
+    - name: Eco-CI Measurement
+      uses: green-coding-berlin/eco-ci-energy-estimation@v2
+      with:
+        task: get-measurement
+        label: 'ngtcp2-quictls.yml (${{ matrix.build.name }})'
+
+    - name: Eco-CI Results
+      uses: green-coding-berlin/eco-ci-energy-estimation@v2
+      with:
+        task: display-results
+

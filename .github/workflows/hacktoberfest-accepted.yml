@@ -5,10 +5,13 @@
 name: Hacktoberfest
 
 on:
+  # workflow_dispatch:
+  # schedule:
+  #   - cron: '0 1,5 * * *'
   # this must not ever run on any other branch than master
-  push:
-    branches:
-    - master
+  # push:
+  #   branches:
+  #   - master
 
 concurrency:
   # this should not run in parallel, so just run one at a time
@@ -26,6 +29,11 @@ jobs:
       issues: write
       pull-requests: write
     steps:
+      - name: Eco-CI Init
+        uses: green-coding-berlin/eco-ci-energy-estimation@v2
+        with:
+          task: start-measurement
+
       - uses: actions/checkout@v3
         with:
           fetch-depth: 100
@@ -65,3 +73,16 @@ jobs:
         if: steps.check.outputs.label == 'hacktoberfest'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Eco-CI Measurement
+        uses: green-coding-berlin/eco-ci-energy-estimation@v2
+        with:
+          task: get-measurement
+          label: 'hacktoberfest'
+
+      - name: Eco-CI Results
+        uses: green-coding-berlin/eco-ci-energy-estimation@v2
+        with:
+          task: display-results
+```
+

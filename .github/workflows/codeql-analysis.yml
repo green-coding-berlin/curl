@@ -5,39 +5,40 @@
 name: CodeQL
 
 on:
-  push:
-    branches:
-    - master
-    - '*/ci'
-    paths-ignore:
-    - '**/*.md'
-    - '.azure-pipelines.yml'
-    - '.circleci/**'
-    - '.cirrus.yml'
-    - 'appveyor.yml'
-    - 'docs/**'
-    - 'packages/**'
-    - 'plan9/**'
-    - 'projects/**'
-    - 'tests/data/**'
-    - 'winbuild/**'
-  pull_request:
-    branches:
-    - master
-    paths-ignore:
-    - '**/*.md'
-    - '.azure-pipelines.yml'
-    - '.circleci/**'
-    - '.cirrus.yml'
-    - 'appveyor.yml'
-    - 'docs/**'
-    - 'packages/**'
-    - 'plan9/**'
-    - 'projects/**'
-    - 'tests/data/**'
-    - 'winbuild/**'
-  schedule:
-    - cron: '0 0 * * 4'
+  workflow_dispatch:
+  # schedule:
+  #   - cron: '0 1,5 * * *'
+  # push:
+  #   branches:
+  #   - master
+  #   - '*/ci'
+  #   paths-ignore:
+  #   - '**/*.md'
+  #   - '.azure-pipelines.yml'
+  #   - '.circleci/**'
+  #   - '.cirrus.yml'
+  #   - 'appveyor.yml'
+  #   - 'docs/**'
+  #   - 'packages/**'
+  #   - 'plan9/**'
+  #   - 'projects/**'
+  #   - 'tests/data/**'
+  #   - 'winbuild/**'
+  # pull_request:
+  #   branches:
+  #   - master
+  #   paths-ignore:
+  #   - '**/*.md'
+  #   - '.azure-pipelines.yml'
+  #   - '.circleci/**'
+  #   - '.cirrus.yml'
+  #   - 'appveyor.yml'
+  #   - 'docs/**'
+  #   - 'packages/**'
+  #   - 'plan9/**'
+  #   - 'projects/**'
+  #   - 'tests/data/**'
+  #   - 'winbuild/**'
 
 concurrency:
   group: ${{ github.workflow }}
@@ -50,6 +51,11 @@ jobs:
     permissions:
       security-events: write
     steps:
+    - name: Eco-CI Init
+      uses: green-coding-berlin/eco-ci-energy-estimation@v2
+      with:
+        task: start-measurement
+
     - name: Checkout repository
       uses: actions/checkout@v3
 
@@ -78,3 +84,14 @@ jobs:
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
+
+    - name: Eco-CI Measurement
+      uses: green-coding-berlin/eco-ci-energy-estimation@v2
+      with:
+        task: get-measurement
+        label: 'codeql'
+
+    - name: Eco-CI Results
+      uses: green-coding-berlin/eco-ci-energy-estimation@v2
+      with:
+        task: display-results

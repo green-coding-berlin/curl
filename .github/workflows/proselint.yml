@@ -5,19 +5,22 @@
 name: proselint
 
 on:
-  push:
-    branches:
-    - master
-    - '*/ci'
-    paths:
-    - '.github/workflows/proselint.yml'
-    - '**.md'
-  pull_request:
-    branches:
-    - master
-    paths:
-    - '.github/workflows/proselint.yml'
-    - '**.md'
+  workflow_dispatch:
+  # schedule:
+  #   - cron: '0 1,5 * * *'
+  # push:
+  #   branches:
+  #   - master
+  #   - '*/ci'
+  #   paths:
+  #   - '.github/workflows/proselint.yml'
+  #   - '**.md'
+  # pull_request:
+  #   branches:
+  #   - master
+  #   paths:
+  #   - '.github/workflows/proselint.yml'
+  #   - '**.md'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
@@ -29,6 +32,11 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
+    - name: Eco-CI Init
+      uses: green-coding-berlin/eco-ci-energy-estimation@v2
+      with:
+        task: start-measurement
+
     - uses: actions/checkout@v2
 
     - name: install prereqs
@@ -66,3 +74,14 @@ jobs:
 
     - name: check special prose
       run: a=docs/CHECKSRC.md && proselint $a
+
+    - name: Eco-CI Measurement
+      uses: green-coding-berlin/eco-ci-energy-estimation@v2
+      with:
+        task: get-measurement
+        label: 'proselint.yml'
+
+    - name: Eco-CI Results
+      uses: green-coding-berlin/eco-ci-energy-estimation@v2
+      with:
+        task: display-results

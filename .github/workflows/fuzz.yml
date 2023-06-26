@@ -5,39 +5,42 @@
 name: Fuzzer
 
 on:
-  push:
-    branches:
-    - master
-    - '*/ci'
-    paths-ignore:
-    - '**/*.md'
-    - '**/CMakeLists.txt'
-    - '.azure-pipelines.yml'
-    - '.circleci/**'
-    - '.cirrus.yml'
-    - 'appveyor.yml'
-    - 'CMake/**'
-    - 'packages/**'
-    - 'plan9/**'
-    - 'projects/**'
-    - 'tests/data/**'
-    - 'winbuild/**'
-  pull_request:
-    branches:
-    - master
-    paths-ignore:
-    - '**/*.md'
-    - '**/CMakeLists.txt'
-    - '.azure-pipelines.yml'
-    - '.circleci/**'
-    - '.cirrus.yml'
-    - 'appveyor.yml'
-    - 'CMake/**'
-    - 'packages/**'
-    - 'plan9/**'
-    - 'projects/**'
-    - 'tests/data/**'
-    - 'winbuild/**'
+  workflow_dispatch:
+  # schedule:
+  #   - cron: '0 1,5 * * *'
+  # push:
+  #   branches:
+  #   - master
+  #   - '*/ci'
+  #   paths-ignore:
+  #   - '**/*.md'
+  #   - '**/CMakeLists.txt'
+  #   - '.azure-pipelines.yml'
+  #   - '.circleci/**'
+  #   - '.cirrus.yml'
+  #   - 'appveyor.yml'
+  #   - 'CMake/**'
+  #   - 'packages/**'
+  #   - 'plan9/**'
+  #   - 'projects/**'
+  #   - 'tests/data/**'
+  #   - 'winbuild/**'
+  # pull_request:
+  #   branches:
+  #   - master
+  #   paths-ignore:
+  #   - '**/*.md'
+  #   - '**/CMakeLists.txt'
+  #   - '.azure-pipelines.yml'
+  #   - '.circleci/**'
+  #   - '.cirrus.yml'
+  #   - 'appveyor.yml'
+  #   - 'CMake/**'
+  #   - 'packages/**'
+  #   - 'plan9/**'
+  #   - 'projects/**'
+  #   - 'tests/data/**'
+  #   - 'winbuild/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}

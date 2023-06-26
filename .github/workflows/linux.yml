@@ -5,33 +5,36 @@
 name: Linux
 
 on:
-  push:
-    branches:
-    - master
-    - '*/ci'
-    paths-ignore:
-    - '**/*.md'
-    - '.azure-pipelines.yml'
-    - '.circleci/**'
-    - '.cirrus.yml'
-    - 'appveyor.yml'
-    - 'packages/**'
-    - 'plan9/**'
-    - 'projects/**'
-    - 'winbuild/**'
-  pull_request:
-    branches:
-    - master
-    paths-ignore:
-    - '**/*.md'
-    - '.azure-pipelines.yml'
-    - '.circleci/**'
-    - '.cirrus.yml'
-    - 'appveyor.yml'
-    - 'packages/**'
-    - 'plan9/**'
-    - 'projects/**'
-    - 'winbuild/**'
+  workflow_dispatch:
+  # schedule:
+  #   - cron: '0 1,5 * * *'
+  # push:
+  #   branches:
+  #   - master
+  #   - '*/ci'
+  #   paths-ignore:
+  #   - '**/*.md'
+  #   - '.azure-pipelines.yml'
+  #   - '.circleci/**'
+  #   - '.cirrus.yml'
+  #   - 'appveyor.yml'
+  #   - 'packages/**'
+  #   - 'plan9/**'
+  #   - 'projects/**'
+  #   - 'winbuild/**'
+  # pull_request:
+  #   branches:
+  #   - master
+  #   paths-ignore:
+  #   - '**/*.md'
+  #   - '.azure-pipelines.yml'
+  #   - '.circleci/**'
+  #   - '.cirrus.yml'
+  #   - 'appveyor.yml'
+  #   - 'packages/**'
+  #   - 'plan9/**'
+  #   - 'projects/**'
+  #   - 'winbuild/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
@@ -159,6 +162,11 @@ jobs:
           container: 'andy5995/slackware-build-essential:15.0'
 
     steps:
+    - name: Eco-CI Init
+      uses: green-coding-berlin/eco-ci-energy-estimation@v2
+      with:
+        task: start-measurement
+
     - if: ${{ matrix.build.container == null }}
       run: |
         sudo apt-get update
@@ -328,3 +336,15 @@ jobs:
       name: 'run pytest'
       env:
         TFLAGS: "${{ matrix.build.tflags }}"
+
+    - name: Eco-CI Measurement
+      uses: green-coding-berlin/eco-ci-energy-estimation@v2
+      with:
+        task: get-measurement
+        label: 'linux.yml (${{ matrix.build.name }})'
+
+    - name: Eco-CI Results
+      uses: green-coding-berlin/eco-ci-energy-estimation@v2
+      with:
+        task: display-results
+

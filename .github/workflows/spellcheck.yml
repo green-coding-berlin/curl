@@ -4,26 +4,29 @@
 
 name: spell
 on:
-  push:
-    branches:
-    - master
-    paths:
-    - '**.md'
-    - '**.3'
-    - '**.1'
-    - '**/spellcheck.yml'
-    - '**/spellcheck.yaml'
-    - '**/wordlist.txt'
-  pull_request:
-    branches:
-    - master
-    paths:
-    - '**.md'
-    - '**.3'
-    - '**.1'
-    - '**/spellcheck.yml'
-    - '**/spellcheck.yaml'
-    - '**/wordlist.txt'
+  workflow_dispatch:
+  # schedule:
+  #   - cron: '0 1,5 * * *'
+  # push:
+  #   branches:
+  #   - master
+  #   paths:
+  #   - '**.md'
+  #   - '**.3'
+  #   - '**.1'
+  #   - '**/spellcheck.yml'
+  #   - '**/spellcheck.yaml'
+  #   - '**/wordlist.txt'
+  # pull_request:
+  #   branches:
+  #   - master
+  #   paths:
+  #   - '**.md'
+  #   - '**.3'
+  #   - '**.1'
+  #   - '**/spellcheck.yml'
+  #   - '**/spellcheck.yaml'
+  #   - '**/wordlist.txt'
 
 permissions: {}
 
@@ -31,6 +34,11 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
+    - name: Eco-CI Init
+      uses: green-coding-berlin/eco-ci-energy-estimation@v2
+      with:
+        task: start-measurement
+
     - uses: actions/checkout@v3
 
     - name: install pandoc
@@ -52,3 +60,15 @@ jobs:
       uses: rojopolis/spellcheck-github-actions@v0
       with:
         config_path: .github/scripts/spellcheck.yaml
+
+    - name: Eco-CI Measurement
+      uses: green-coding-berlin/eco-ci-energy-estimation@v2
+      with:
+        task: get-measurement
+        label: 'spellcheck.yml'
+
+    - name: Eco-CI Results
+      uses: green-coding-berlin/eco-ci-energy-estimation@v2
+      with:
+        task: display-results
+
