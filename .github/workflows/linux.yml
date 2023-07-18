@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: curl
 
-name: Linux
+name: Linux - Main Workflow
 
 on:
   workflow_dispatch:
