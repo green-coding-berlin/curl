@@ -6,7 +6,7 @@ on:
 
 permissions: 
   contents: write
-  workflows: write
+  workflow: write
 
 jobs:
   sync:
