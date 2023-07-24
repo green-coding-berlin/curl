@@ -1122,6 +1122,21 @@ static int on_frame_recv(nghttp2_session *session, const nghttp2_frame *frame,
                       ctx->max_concurrent_streams));
         multi_connchanged(data->multi);
       }
+      /* Since the initial stream window is 64K, a request might be on HOLD,
+       * due to exhaustion. The (initial) SETTINGS may announce a much larger
+       * window and *assume* that we treat this like a WINDOW_UPDATE. Some
+       * servers send an explicit WINDOW_UPDATE, but not all seem to do that.
+       * To be safe, we UNHOLD a stream in order not to stall. */
+      if((data->req.keepon & KEEP_SEND_HOLD) &&
+         (data->req.keepon & KEEP_SEND)) {
+        struct stream_ctx *stream = H2_STREAM_CTX(data);
+        data->req.keepon &= ~KEEP_SEND_HOLD;
+        if(stream) {
+          drain_stream(cf, data, stream);
+          DEBUGF(LOG_CF(data, cf, "[h2sid=%d] un-holding after SETTINGS",
+                        stream_id));
+        }
+      }
       break;
     }
     case NGHTTP2_GOAWAY:
@@ -1686,9 +1701,10 @@ static CURLcode h2_progress_egress(struct Curl_cfilter *cf,
   struct stream_ctx *stream = H2_STREAM_CTX(data);
   int rv = 0;
 
-  if((sweight_wanted(data) != sweight_in_effect(data)) ||
-     (data->set.priority.exclusive != data->state.priority.exclusive) ||
-     (data->set.priority.parent != data->state.priority.parent) ) {
+  if(stream && stream->id > 0 &&
+     ((sweight_wanted(data) != sweight_in_effect(data)) ||
+      (data->set.priority.exclusive != data->state.priority.exclusive) ||
+      (data->set.priority.parent != data->state.priority.parent)) ) {
     /* send new weight and/or dependency */
     nghttp2_priority_spec pri_spec;
 
@@ -1892,7 +1908,8 @@ static ssize_t h2_submit(struct stream_ctx **pstream,
   struct h1_req_parser h1;
   struct dynhds h2_headers;
   nghttp2_nv *nva = NULL;
-  size_t nheader, i;
+  const void *body = NULL;
+  size_t nheader, bodylen, i;
   nghttp2_data_provider data_prd;
   int32_t stream_id;
   nghttp2_priority_spec pri_spec;
@@ -2010,6 +2027,20 @@ static ssize_t h2_submit(struct stream_ctx **pstream,
     }
   }
 
+  body = (const char *)buf + nwritten;
+  bodylen = len - nwritten;
+
+  if(bodylen) {
+    /* We have request body to send in DATA frame */
+    ssize_t n = Curl_bufq_write(&stream->sendbuf, body, bodylen, err);
+    if(n < 0) {
+      *err = CURLE_SEND_ERROR;
+      nwritten = -1;
+      goto out;
+    }
+    nwritten += n;
+  }
+
 out:
   DEBUGF(LOG_CF(data, cf, "[h2sid=%d] submit -> %zd, %d",
          stream? stream->id : -1, nwritten, *err));
@@ -2059,8 +2090,9 @@ static ssize_t cf_h2_send(struct Curl_cfilter *cf, struct Curl_easy *data,
       stream->upload_blocked_len = 0;
     }
     else {
-      /* If stream_id != -1, we have dispatched request HEADERS, and now
-         are going to send or sending request body in DATA frame */
+      /* If stream_id != -1, we have dispatched request HEADERS and
+       * optionally request body, and now are going to send or sending
+       * more request body in DATA frame */
       nwritten = Curl_bufq_write(&stream->sendbuf, buf, len, err);
       if(nwritten < 0) {
         if(*err != CURLE_AGAIN)

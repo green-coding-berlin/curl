@@ -2667,11 +2667,7 @@ CURLcode Curl_http_bodysend(struct Curl_easy *data, struct connectdata *conn,
 #ifndef USE_HYPER
     /* With Hyper the body is always passed on separately */
     if(data->set.postfields) {
-
-      /* In HTTP2, we send request body in DATA frame regardless of
-         its size. */
-      if(conn->httpversion < 20 &&
-         !data->state.expect100header &&
+      if(!data->state.expect100header &&
          (http->postsize < MAX_INITIAL_POST_SIZE)) {
         /* if we don't use expect: 100  AND
            postsize is less than MAX_INITIAL_POST_SIZE
@@ -3383,6 +3379,9 @@ CURLcode Curl_http(struct Curl_easy *data, bool *done)
       Curl_expire_done(data, EXPIRE_100_TIMEOUT);
     }
   }
+
+  if(data->req.upload_done)
+    Curl_conn_ev_data_done_send(data);
 
   if((conn->httpversion >= 20) && data->req.upload_chunky)
     /* upload_chunky was set above to set up the request in a chunky fashion,
