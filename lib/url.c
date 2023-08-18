@@ -457,6 +457,11 @@ CURLcode Curl_close(struct Curl_easy **datap)
   }
 #endif
 
+  Curl_mime_cleanpart(data->state.formp);
+#ifndef CURL_DISABLE_HTTP
+  Curl_safefree(data->state.formp);
+#endif
+
   /* destruct wildcard structures if it is needed */
   Curl_wildcard_dtor(&data->wildcard);
   Curl_freeset(data);
@@ -1590,8 +1595,10 @@ static struct connectdata *allocate_conn(struct Curl_easy *data)
     if(!conn->localdev)
       goto error;
   }
+#ifndef CURL_DISABLE_BINDLOCAL
   conn->localportrange = data->set.localportrange;
   conn->localport = data->set.localport;
+#endif
 
   /* the close socket stuff needs to be copied to the connection struct as
      it may live on without (this specific) Curl_easy */

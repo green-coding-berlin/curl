@@ -657,12 +657,10 @@ case X-"$curl_cv_native_windows" in
   X-yes)
     CURL_CHECK_HEADER_WINSOCK2
     CURL_CHECK_HEADER_WS2TCPIP
-    CURL_CHECK_HEADER_WINCRYPT
     ;;
   *)
     curl_cv_header_winsock2_h="no"
     curl_cv_header_ws2tcpip_h="no"
-    curl_cv_header_wincrypt_h="no"
     ;;
 esac
 CURL_CHECK_WIN32_LARGEFILE
@@ -4119,6 +4117,24 @@ AS_HELP_STRING([--disable-mime],[Disable mime API support]),
   no)
        AC_MSG_RESULT(no)
        AC_DEFINE(CURL_DISABLE_MIME, 1, [disable mime API])
+       ;;
+  *)   AC_MSG_RESULT(yes)
+       ;;
+  esac ],
+       AC_MSG_RESULT(yes)
+)
+
+dnl ************************************************************
+dnl disable bindlocal
+dnl
+AC_MSG_CHECKING([whether to support binding connections locally])
+AC_ARG_ENABLE(bindlocal,
+AS_HELP_STRING([--enable-bindlocal],[Enable local binding support])
+AS_HELP_STRING([--disable-bindlocal],[Disable local binding support]),
+[ case "$enableval" in
+  no)
+       AC_MSG_RESULT(no)
+       AC_DEFINE(CURL_DISABLE_BINDLOCAL, 1, [disable local binding support])
        ;;
   *)   AC_MSG_RESULT(yes)
        ;;

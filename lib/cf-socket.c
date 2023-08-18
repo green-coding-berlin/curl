@@ -390,6 +390,7 @@ void Curl_sndbufset(curl_socket_t sockfd)
 }
 #endif
 
+#ifndef CURL_DISABLE_BINDLOCAL
 static CURLcode bindlocal(struct Curl_easy *data, struct connectdata *conn,
                           curl_socket_t sockfd, int af, unsigned int scope)
 {
@@ -444,29 +445,24 @@ static CURLcode bindlocal(struct Curl_easy *data, struct connectdata *conn,
     /* interface */
     if(!is_host) {
 #ifdef SO_BINDTODEVICE
-      /* I am not sure any other OSs than Linux that provide this feature,
-       * and at the least I cannot test. --Ben
+      /*
+       * This binds the local socket to a particular interface. This will
+       * force even requests to other local interfaces to go out the external
+       * interface. Only bind to the interface when specified as interface,
+       * not just as a hostname or ip address.
        *
-       * This feature allows one to tightly bind the local socket to a
-       * particular interface.  This will force even requests to other
-       * local interfaces to go out the external interface.
-       *
-       *
-       * Only bind to the interface when specified as interface, not just
-       * as a hostname or ip address.
-       *
-       * interface might be a VRF, eg: vrf-blue, which means it cannot be
-       * converted to an IP address and would fail Curl_if2ip. Simply try
-       * to use it straight away.
+       * The interface might be a VRF, eg: vrf-blue, which means it cannot be
+       * converted to an IP address and would fail Curl_if2ip. Simply try to
+       * use it straight away.
        */
       if(setsockopt(sockfd, SOL_SOCKET, SO_BINDTODEVICE,
                     dev, (curl_socklen_t)strlen(dev) + 1) == 0) {
-        /* This is typically "errno 1, error: Operation not permitted" if
-         * you're not running as root or another suitable privileged
-         * user.
-         * If it succeeds it means the parameter was a valid interface and
-         * not an IP address. Return immediately.
+        /* This is often "errno 1, error: Operation not permitted" if you're
+         * not running as root or another suitable privileged user. If it
+         * succeeds it means the parameter was a valid interface and not an IP
+         * address. Return immediately.
          */
+        infof(data, "socket successfully bound to interface '%s'", dev);
         return CURLE_OK;
       }
 #endif
@@ -653,6 +649,7 @@ static CURLcode bindlocal(struct Curl_easy *data, struct connectdata *conn,
 
   return CURLE_INTERFACE_FAILED;
 }
+#endif
 
 /*
  * verifyconnect() returns TRUE if the connect really has happened.
@@ -727,8 +724,6 @@ static bool verifyconnect(curl_socket_t sockfd, int *error)
 static CURLcode socket_connect_result(struct Curl_easy *data,
                                       const char *ipaddress, int error)
 {
-  char buffer[STRERROR_LEN];
-
   switch(error) {
   case EINPROGRESS:
   case EWOULDBLOCK:
@@ -745,8 +740,15 @@ static CURLcode socket_connect_result(struct Curl_easy *data,
 
   default:
     /* unknown error, fallthrough and try another address! */
-    infof(data, "Immediate connect fail for %s: %s",
-          ipaddress, Curl_strerror(error, buffer, sizeof(buffer)));
+#ifdef CURL_DISABLE_VERBOSE_STRINGS
+    (void)ipaddress;
+#else
+    {
+      char buffer[STRERROR_LEN];
+      infof(data, "Immediate connect fail for %s: %s",
+            ipaddress, Curl_strerror(error, buffer, sizeof(buffer)));
+    }
+#endif
     data->state.os_errno = error;
     /* connect failed */
     return CURLE_COULDNT_CONNECT;
@@ -957,7 +959,6 @@ static CURLcode cf_socket_open(struct Curl_cfilter *cf,
   bool isconnected = FALSE;
   CURLcode result = CURLE_COULDNT_CONNECT;
   bool is_tcp;
-  const char *ipmsg;
 
   (void)data;
   DEBUGASSERT(ctx->sock == CURL_SOCKET_BAD);
@@ -970,15 +971,20 @@ static CURLcode cf_socket_open(struct Curl_cfilter *cf,
   if(result)
     goto out;
 
+#ifndef CURL_DISABLE_VERBOSE_STRINGS
+  {
+    const char *ipmsg;
 #ifdef ENABLE_IPV6
-  if(ctx->addr.family == AF_INET6) {
-    set_ipv6_v6only(ctx->sock, 0);
-    ipmsg = "  Trying [%s]:%d...";
-  }
-  else
+    if(ctx->addr.family == AF_INET6) {
+      set_ipv6_v6only(ctx->sock, 0);
+      ipmsg = "  Trying [%s]:%d...";
+    }
+    else
 #endif
-    ipmsg = "  Trying %s:%d...";
-  infof(data, ipmsg, ctx->r_ip, ctx->r_port);
+      ipmsg = "  Trying %s:%d...";
+    infof(data, ipmsg, ctx->r_ip, ctx->r_port);
+  }
+#endif
 
 #ifdef ENABLE_IPV6
   is_tcp = (ctx->addr.family == AF_INET
@@ -1014,6 +1020,7 @@ static CURLcode cf_socket_open(struct Curl_cfilter *cf,
     }
   }
 
+#ifndef CURL_DISABLE_BINDLOCAL
   /* possibly bind the local end to an IP, interface or port */
   if(ctx->addr.family == AF_INET
 #ifdef ENABLE_IPV6
@@ -1031,6 +1038,7 @@ static CURLcode cf_socket_open(struct Curl_cfilter *cf,
       goto out;
     }
   }
+#endif
 
   /* set socket non-blocking */
   (void)curlx_nonblock(ctx->sock, TRUE);
@@ -1922,4 +1930,3 @@ CURLcode Curl_cf_socket_peek(struct Curl_cfilter *cf,
   }
   return CURLE_FAILED_INIT;
 }
-

@@ -824,9 +824,6 @@ static CURLcode readwrite_upload(struct Curl_easy *data,
   bool sending_http_headers = FALSE;
   struct SingleRequest *k = &data->req;
 
-  if((k->bytecount == 0) && (k->writebytecount == 0))
-    Curl_pgrsTime(data, TIMER_STARTTRANSFER);
-
   *didwhat |= KEEP_SEND;
 
   do {
@@ -1335,7 +1332,9 @@ CURLcode Curl_pretransfer(struct Curl_easy *data)
   }
 
   data->state.prefer_ascii = data->set.prefer_ascii;
+#ifdef CURL_LIST_ONLY_PROTOCOL
   data->state.list_only = data->set.list_only;
+#endif
   data->state.httpreq = data->set.method;
   data->state.url = data->set.str[STRING_SET_URL];
 

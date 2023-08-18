@@ -371,8 +371,10 @@ check_library_exists_concat("socket" connect      HAVE_LIBSOCKET)
 check_function_exists(gethostname HAVE_GETHOSTNAME)
 
 if(WIN32)
-  check_library_exists_concat("ws2_32" getch        HAVE_LIBWS2_32)
-  check_library_exists_concat("winmm"  getch        HAVE_LIBWINMM)
+  list(APPEND CURL_LIBS "ws2_32")
+  if(USE_LIBRTMP)
+    list(APPEND CURL_LIBS "winmm")
+  endif()
 
   # Matching logic used for Curl_win32_random()
   if(MINGW)
@@ -403,6 +405,7 @@ endif()
 cmake_dependent_option(CURL_USE_MBEDTLS "Enable mbedTLS for SSL/TLS" OFF CURL_ENABLE_SSL OFF)
 cmake_dependent_option(CURL_USE_BEARSSL "Enable BearSSL for SSL/TLS" OFF CURL_ENABLE_SSL OFF)
 cmake_dependent_option(CURL_USE_WOLFSSL "enable wolfSSL for SSL/TLS" OFF CURL_ENABLE_SSL OFF)
+cmake_dependent_option(CURL_USE_GNUTLS  "Enable GNUTLS for SSL/TLS" OFF CURL_ENABLE_SSL OFF)
 
 set(openssl_default ON)
 if(WIN32 OR CURL_USE_SECTRANSP OR CURL_USE_SCHANNEL OR CURL_USE_MBEDTLS OR CURL_USE_WOLFSSL)
@@ -507,6 +510,11 @@ if(CURL_USE_WOLFSSL)
   set(USE_WOLFSSL ON)
   list(APPEND CURL_LIBS ${WolfSSL_LIBRARIES})
   include_directories(${WolfSSL_INCLUDE_DIRS})
+endif()
+
+if(CURL_USE_GNUTLS)
+   set(SSL_ENABLED ON)
+   set(USE_GNUTLS ON)
 endif()
 
 # Keep ZLIB detection after TLS detection,
@@ -678,10 +686,8 @@ if(NOT CURL_DISABLE_LDAP)
   if(WIN32)
     option(USE_WIN32_LDAP "Use Windows LDAP implementation" ON)
     if(USE_WIN32_LDAP)
-      check_library_exists_concat("wldap32" cldap_open HAVE_WLDAP32)
-      if(NOT HAVE_WLDAP32)
-        set(USE_WIN32_LDAP OFF)
-      elseif(NOT CURL_DISABLE_LDAPS)
+      list(APPEND CURL_LIBS "wldap32")
+      if(NOT CURL_DISABLE_LDAPS)
         set(HAVE_LDAP_SSL ON)
       endif()
     endif()
@@ -997,7 +1003,6 @@ if(NOT UNIX)
   check_include_file_concat("windows.h"      HAVE_WINDOWS_H)
   check_include_file_concat("ws2tcpip.h"     HAVE_WS2TCPIP_H)
   check_include_file_concat("winsock2.h"     HAVE_WINSOCK2_H)
-  check_include_file_concat("wincrypt.h"     HAVE_WINCRYPT_H)
 endif()
 
 check_include_file_concat("inttypes.h"       HAVE_INTTYPES_H)
@@ -1075,7 +1080,7 @@ if(NOT CMAKE_CROSSCOMPILING)
 endif()
 
 # Check for some functions that are used
-if(HAVE_LIBWS2_32)
+if(WIN32)
   set(CMAKE_REQUIRED_LIBRARIES ws2_32)
 elseif(HAVE_LIBSOCKET)
   set(CMAKE_REQUIRED_LIBRARIES socket)
@@ -1332,11 +1337,8 @@ if(WIN32)
   # Use the manifest embedded in the Windows Resource
   set(CMAKE_RC_FLAGS "${CMAKE_RC_FLAGS} -DCURL_EMBED_MANIFEST")
 
-  # Check if crypto functions in wincrypt.h are actually available
-  if(HAVE_WINCRYPT_H)
-    check_symbol_exists(CryptAcquireContext "windows.h;wincrypt.h" USE_WINCRYPT)
-  endif()
-  if(USE_WINCRYPT)
+  # We use crypto functions that are not available for UWP apps
+  if(NOT WINDOWS_STORE)
     set(USE_WIN32_CRYPTO ON)
   endif()
 
@@ -1448,7 +1450,7 @@ endmacro()
 # NTLM support requires crypto function adaptions from various SSL libs
 # TODO alternative SSL libs tests for SSP1, GNUTLS, NSS
 if(NOT (CURL_DISABLE_CRYPTO_AUTH OR CURL_DISABLE_NTLM) AND
-    (USE_OPENSSL OR USE_MBEDTLS OR USE_DARWINSSL OR USE_WIN32_CRYPTO))
+    (USE_OPENSSL OR USE_MBEDTLS OR USE_DARWINSSL OR USE_WIN32_CRYPTO OR USE_GNUTLS))
   set(use_curl_ntlm_core ON)
 endif()
 
@@ -1548,6 +1550,8 @@ _add_if("Secure Transport" SSL_ENABLED AND USE_SECTRANSP)
 _add_if("mbedTLS"          SSL_ENABLED AND USE_MBEDTLS)
 _add_if("BearSSL"          SSL_ENABLED AND USE_BEARSSL)
 _add_if("wolfSSL"          SSL_ENABLED AND USE_WOLFSSL)
+_add_if("GnuTLS"           SSL_ENABLED AND USE_GNUTLS)
+
 if(_items)
   list(SORT _items)
 endif()
