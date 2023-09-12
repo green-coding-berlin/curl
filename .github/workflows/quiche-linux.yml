@@ -203,7 +203,8 @@ jobs:
       env:
         TFLAGS: "${{ matrix.build.tflags }}"
 
-    - run: pytest -v tests/http
+    - run: pytest -v tests
       name: 'run pytest'
       env:
         TFLAGS: "${{ matrix.build.tflags }}"
+        CURL_CI: github

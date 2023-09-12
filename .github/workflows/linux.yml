@@ -416,6 +416,7 @@ jobs:
       name: 'run pytest'
       env:
         TFLAGS: "${{ matrix.build.tflags }}"
+        CURL_CI: github
 
     - name: Eco-CI Measurement
       uses: green-coding-berlin/eco-ci-energy-estimation@v2
@@ -427,4 +428,3 @@ jobs:
       uses: green-coding-berlin/eco-ci-energy-estimation@v2
       with:
         task: display-results
-
