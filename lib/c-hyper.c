@@ -174,8 +174,6 @@ static int hyper_each_header(void *userdata,
 
   if(!data->state.hconnect || !data->set.suppress_connect_headers) {
     writetype = CLIENTWRITE_HEADER;
-    if(data->set.include_header)
-      writetype |= CLIENTWRITE_BODY;
     if(data->state.hconnect)
       writetype |= CLIENTWRITE_CONNECT;
     if(data->req.httpcode/100 == 1)
@@ -260,7 +258,11 @@ static int hyper_body_chunk(void *userdata, const hyper_buf *chunk)
   }
 
   data->req.bytecount += len;
-  Curl_pgrsSetDownloadCounter(data, data->req.bytecount);
+  result = Curl_pgrsSetDownloadCounter(data, data->req.bytecount);
+  if(result) {
+    data->state.hresult = result;
+    return HYPER_ITER_BREAK;
+  }
   return HYPER_ITER_CONTINUE;
 }
 
@@ -314,8 +316,6 @@ static CURLcode status_line(struct Curl_easy *data,
 
   if(!data->state.hconnect || !data->set.suppress_connect_headers) {
     writetype = CLIENTWRITE_HEADER|CLIENTWRITE_STATUS;
-    if(data->set.include_header)
-      writetype |= CLIENTWRITE_BODY;
     result = Curl_client_write(data, writetype,
                                Curl_dyn_ptr(&data->state.headerb), len);
     if(result)

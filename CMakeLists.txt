@@ -102,7 +102,7 @@ option(CURL_WERROR "Turn compiler warnings into errors" OFF)
 option(PICKY_COMPILER "Enable picky compiler options" ON)
 option(BUILD_CURL_EXE "Set to ON to build curl executable." ON)
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
-option(BUILD_STATIC_LIBS "Build shared libraries" OFF)
+option(BUILD_STATIC_LIBS "Build static libraries" OFF)
 option(BUILD_STATIC_CURL "Build curl executable with static libcurl" OFF)
 option(ENABLE_ARES "Set to ON to enable c-ares support" OFF)
 if(WIN32)
@@ -302,7 +302,7 @@ if(ENABLE_IPV6 AND NOT WIN32)
   endif()
 
   if(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND NOT ENABLE_ARES)
-    set(use_core_foundation ON)
+    set(use_core_foundation_and_core_services ON)
 
     find_library(SYSTEMCONFIGURATION_FRAMEWORK "SystemConfiguration")
     if(NOT SYSTEMCONFIGURATION_FRAMEWORK)
@@ -385,19 +385,6 @@ if(WIN32)
   if(USE_LIBRTMP)
     list(APPEND CURL_LIBS "winmm")
   endif()
-
-  # Matching logic used for Curl_win32_random()
-  if(MINGW)
-    check_c_source_compiles("
-      #include <_mingw.h>
-      #if defined(__MINGW64_VERSION_MAJOR)
-      #error
-      #endif
-      int main(void) {
-        return 0;
-      }"
-      HAVE_MINGW_ORIGINAL)
-  endif()
 endif()
 
 # check SSL libraries
@@ -445,7 +432,7 @@ if(CURL_WINDOWS_SSPI)
 endif()
 
 if(CURL_USE_SECTRANSP)
-  set(use_core_foundation ON)
+  set(use_core_foundation_and_core_services ON)
 
   find_library(SECURITY_FRAMEWORK "Security")
   if(NOT SECURITY_FRAMEWORK)
@@ -457,13 +444,18 @@ if(CURL_USE_SECTRANSP)
   list(APPEND CURL_LIBS "-framework Security")
 endif()
 
-if(use_core_foundation)
+if(use_core_foundation_and_core_services)
   find_library(COREFOUNDATION_FRAMEWORK "CoreFoundation")
+  find_library(CORESERVICES_FRAMEWORK "CoreServices")
+
   if(NOT COREFOUNDATION_FRAMEWORK)
       message(FATAL_ERROR "CoreFoundation framework not found")
   endif()
+  if(NOT CORESERVICES_FRAMEWORK)
+      message(FATAL_ERROR "CoreServices framework not found")
+  endif()
 
-  list(APPEND CURL_LIBS "-framework CoreFoundation")
+  list(APPEND CURL_LIBS "-framework CoreFoundation -framework CoreServices")
 endif()
 
 if(CURL_USE_OPENSSL)
@@ -483,9 +475,7 @@ if(CURL_USE_OPENSSL)
 
   if(WIN32)
     list(APPEND CURL_LIBS "ws2_32")
-    if(NOT HAVE_MINGW_ORIGINAL)
-      list(APPEND CURL_LIBS "bcrypt")  # for OpenSSL/LibreSSL
-    endif()
+    list(APPEND CURL_LIBS "bcrypt")  # for OpenSSL/LibreSSL
   endif()
 
   set(CMAKE_REQUIRED_INCLUDES ${OPENSSL_INCLUDE_DIR})
@@ -590,9 +580,7 @@ macro(openssl_check_symbol_exists SYMBOL FILES VARIABLE)
     endif()
     if(WIN32)
       list(APPEND CMAKE_REQUIRED_LIBRARIES "ws2_32")
-      if(NOT HAVE_MINGW_ORIGINAL)
-        list(APPEND CMAKE_REQUIRED_LIBRARIES "bcrypt")  # for OpenSSL/LibreSSL
-      endif()
+      list(APPEND CMAKE_REQUIRED_LIBRARIES "bcrypt")  # for OpenSSL/LibreSSL
     endif()
   elseif(USE_WOLFSSL)
     set(CMAKE_REQUIRED_INCLUDES   "${WolfSSL_INCLUDE_DIRS}")
@@ -1030,7 +1018,6 @@ check_include_file_concat("sys/un.h"         HAVE_SYS_UN_H)
 check_include_file_concat("sys/utime.h"      HAVE_SYS_UTIME_H)
 check_include_file_concat("sys/xattr.h"      HAVE_SYS_XATTR_H)
 check_include_file_concat("arpa/inet.h"      HAVE_ARPA_INET_H)
-check_include_file_concat("arpa/tftp.h"      HAVE_ARPA_TFTP_H)
 check_include_file_concat("fcntl.h"          HAVE_FCNTL_H)
 check_include_file_concat("idn2.h"           HAVE_IDN2_H)
 check_include_file_concat("ifaddrs.h"        HAVE_IFADDRS_H)
@@ -1356,11 +1343,7 @@ if(WIN32)
     list(APPEND CURL_LIBS "advapi32" "crypt32")
   endif()
 
-  if(NOT HAVE_MINGW_ORIGINAL)
-    list(APPEND CURL_LIBS "bcrypt")
-  else()
-    set(HAVE_FTRUNCATE OFF)
-  endif()
+  list(APPEND CURL_LIBS "bcrypt")
 endif()
 
 if(MSVC)
