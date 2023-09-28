@@ -1159,8 +1159,6 @@ CURLcode Curl_http_input_auth(struct Curl_easy *data, bool proxy,
  * http_should_fail() determines whether an HTTP response has gotten us
  * into an error state or not.
  *
- * @param conn all information about the current connection
- *
  * @retval FALSE communications should continue
  *
  * @retval TRUE communications should not continue
@@ -1603,8 +1601,6 @@ CURLcode Curl_http_done(struct Curl_easy *data,
    * a chance to be set back to true when we output the next auth header */
   data->state.authhost.multipass = FALSE;
   data->state.authproxy.multipass = FALSE;
-
-  Curl_unencode_cleanup(data);
 
   /* set the proper values (possibly modified on POST) */
   conn->seek_func = data->set.seek_func; /* restore */
