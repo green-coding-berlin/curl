@@ -39,7 +39,7 @@ jobs:
       with:
         task: start-measurement
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: install pandoc
       run: sudo apt-get install pandoc

@@ -159,6 +159,9 @@
 /* Define to 1 if you have the alarm function. */
 #cmakedefine HAVE_ALARM 1
 
+/* Define to 1 if you have the arc4random function. */
+#cmakedefine HAVE_ARC4RANDOM 1
+
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 #cmakedefine HAVE_ARPA_INET_H 1
 
@@ -167,6 +170,9 @@
 
 /* Define to 1 if you have the `fchmod' function. */
 #cmakedefine HAVE_FCHMOD 1
+
+/* Define to 1 if you have the `fnmatch' function. */
+#cmakedefine HAVE_FNMATCH 1
 
 /* Define to 1 if you have the `basename' function. */
 #cmakedefine HAVE_BASENAME 1
@@ -179,6 +185,10 @@
 
 /* Define to 1 if you have the clock_gettime function and monotonic timer. */
 #cmakedefine HAVE_CLOCK_GETTIME_MONOTONIC 1
+
+/* Define to 1 if you have the clock_gettime function and raw monotonic timer.
+   */
+#cmakedefine HAVE_CLOCK_GETTIME_MONOTONIC_RAW 1
 
 /* Define to 1 if you have the `closesocket' function. */
 #cmakedefine HAVE_CLOSESOCKET 1
@@ -194,6 +204,12 @@
 
 /* Define to 1 if you have the freeaddrinfo function. */
 #cmakedefine HAVE_FREEADDRINFO 1
+
+/* Define to 1 if you have the fseeko function. */
+#cmakedefine HAVE_FSEEKO 1
+
+/* Define to 1 if you have the _fseeki64 function. */
+#cmakedefine HAVE__FSEEKI64 1
 
 /* Define to 1 if you have the ftruncate function. */
 #cmakedefine HAVE_FTRUNCATE 1
@@ -230,9 +246,6 @@
 
 /* Define to 1 if you have the `getpass_r' function. */
 #cmakedefine HAVE_GETPASS_R 1
-
-/* Define to 1 if you have the `getppid' function. */
-#cmakedefine HAVE_GETPPID 1
 
 /* Define to 1 if you have the `getpeername' function. */
 #cmakedefine HAVE_GETPEERNAME 1
@@ -370,6 +383,9 @@
 /* Define to 1 if the compiler supports the 'long long' data type. */
 #cmakedefine HAVE_LONGLONG 1
 
+/* Define to 1 if you have the 'suseconds_t' data type. */
+#cmakedefine HAVE_SUSECONDS_T 1
+
 /* Define to 1 if you have the MSG_NOSIGNAL flag. */
 #cmakedefine HAVE_MSG_NOSIGNAL 1
 
@@ -381,6 +397,9 @@
 
 /* Define to 1 if you have the <netinet/tcp.h> header file. */
 #cmakedefine HAVE_NETINET_TCP_H 1
+
+/* Define to 1 if you have the <netinet/udp.h> header file. */
+#cmakedefine HAVE_NETINET_UDP_H 1
 
 /* Define to 1 if you have the <linux/tcp.h> header file. */
 #cmakedefine HAVE_LINUX_TCP_H 1
@@ -418,8 +437,14 @@
 /* Define to 1 if you have the select function. */
 #cmakedefine HAVE_SELECT 1
 
+/* Define to 1 if you have the sched_yield function. */
+#cmakedefine HAVE_SCHED_YIELD 1
+
 /* Define to 1 if you have the send function. */
 #cmakedefine HAVE_SEND 1
+
+/* Define to 1 if you have the sendmsg function. */
+#cmakedefine HAVE_SENDMSG 1
 
 /* Define to 1 if you have the 'fsetxattr' function. */
 #cmakedefine HAVE_FSETXATTR 1
@@ -455,7 +480,7 @@
 #cmakedefine HAVE_SIGSETJMP 1
 
 /* Define to 1 if you have the `snprintf' function. */
-#cmakedefine HAVE_SNPRINTF
+#cmakedefine HAVE_SNPRINTF 1
 
 /* Define to 1 if struct sockaddr_in6 has the sin6_scope_id member */
 #cmakedefine HAVE_SOCKADDR_IN6_SIN6_SCOPE_ID 1
@@ -513,6 +538,9 @@
 
 /* Define to 1 if you have the <sys/filio.h> header file. */
 #cmakedefine HAVE_SYS_FILIO_H 1
+
+/* Define to 1 if you have the <sys/wait.h> header file. */
+#cmakedefine HAVE_SYS_WAIT_H 1
 
 /* Define to 1 if you have the <sys/ioctl.h> header file. */
 #cmakedefine HAVE_SYS_IOCTL_H 1
@@ -643,6 +671,9 @@ ${SIZEOF_OFF_T_CODE}
 /* The size of `curl_off_t', as computed by sizeof. */
 ${SIZEOF_CURL_OFF_T_CODE}
 
+/* The size of `curl_socket_t', as computed by sizeof. */
+${SIZEOF_CURL_SOCKET_T_CODE}
+
 /* The size of `size_t', as computed by sizeof. */
 ${SIZEOF_SIZE_T_CODE}
 
@@ -651,9 +682,6 @@ ${SIZEOF_TIME_T_CODE}
 
 /* Define to 1 if you have the ANSI C header files. */
 #cmakedefine STDC_HEADERS 1
-
-/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
-#cmakedefine TIME_WITH_SYS_TIME 1
 
 /* Define if you want to enable c-ares support */
 #cmakedefine USE_ARES 1
@@ -720,7 +748,7 @@ ${SIZEOF_TIME_T_CODE}
 #cmakedefine USE_MSH3 1
 
 /* if Unix domain sockets are enabled  */
-#cmakedefine USE_UNIX_SOCKETS
+#cmakedefine USE_UNIX_SOCKETS 1
 
 /* Define to 1 if you are building a Windows target with large file support. */
 #cmakedefine USE_WIN32_LARGE_FILES 1
@@ -777,3 +805,12 @@ ${SIZEOF_TIME_T_CODE}
 
 /* Define to 1 to enable websocket support. */
 #cmakedefine USE_WEBSOCKETS 1
+
+/* Define to 1 if OpenSSL has the SSL_CTX_set_srp_username function. */
+#cmakedefine HAVE_OPENSSL_SRP 1
+
+/* Define to 1 if GnuTLS has the gnutls_srp_verifier function. */
+#cmakedefine HAVE_GNUTLS_SRP 1
+
+/* Define to 1 to enable TLS-SRP support. */
+#cmakedefine USE_TLS_SRP 1

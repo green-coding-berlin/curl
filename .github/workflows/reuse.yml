@@ -32,9 +32,9 @@ jobs:
       with:
         task: start-measurement
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: REUSE Compliance Check
-      uses: fsfe/reuse-action@v1
+      uses: fsfe/reuse-action@v2
 
     - name: Eco-CI Measurement
       uses: green-coding-berlin/eco-ci-energy-estimation@v2
@@ -46,4 +46,3 @@ jobs:
       uses: green-coding-berlin/eco-ci-energy-estimation@v2
       with:
         task: display-results
-

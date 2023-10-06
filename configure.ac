@@ -1151,7 +1151,7 @@ then
 #endif
 #endif
         ]],[[
-          gethostbyname("www.dummysite.com");
+          gethostbyname("localhost");
         ]])
       ],[
         AC_MSG_RESULT([yes])
@@ -1174,7 +1174,7 @@ then
 /* Older Minix versions may need <net/gen/netdb.h> here instead */
 #include <netdb.h>
     ]],[[
-      gethostbyname("www.dummysite.com");
+      gethostbyname("localhost");
     ]])
   ],[
     AC_MSG_RESULT([yes])
@@ -1193,7 +1193,7 @@ then
 #include <stdio.h>
 #include <netdb.h>
     ]],[[
-      gethostbyname("www.dummysite.com");
+      gethostbyname("localhost");
     ]])
   ],[
     AC_MSG_RESULT([yes])
@@ -1217,7 +1217,7 @@ then
   struct Library *SocketBase = NULL;
   #endif
     ]],[[
-      gethostbyname("www.dummysite.com");
+      gethostbyname("localhost");
     ]])
   ],[
     AC_MSG_RESULT([yes])
@@ -3352,7 +3352,6 @@ AC_CHECK_HEADERS(
         sys/select.h \
         sys/socket.h \
         sys/ioctl.h \
-        sys/uio.h \
         unistd.h \
         stdlib.h \
         arpa/inet.h \
@@ -3536,7 +3535,6 @@ CURL_CHECK_FUNC_ALARM
 CURL_CHECK_FUNC_BASENAME
 CURL_CHECK_FUNC_CLOSESOCKET
 CURL_CHECK_FUNC_CLOSESOCKET_CAMEL
-CURL_CHECK_FUNC_CONNECT
 CURL_CHECK_FUNC_FCNTL
 CURL_CHECK_FUNC_FREEADDRINFO
 CURL_CHECK_FUNC_FSETXATTR
@@ -3552,6 +3550,7 @@ CURL_CHECK_FUNC_GETIFADDRS
 CURL_CHECK_FUNC_GMTIME_R
 CURL_CHECK_FUNC_INET_NTOP
 CURL_CHECK_FUNC_INET_PTON
+CURL_CHECK_FUNC_IOCTL
 CURL_CHECK_FUNC_IOCTLSOCKET
 CURL_CHECK_FUNC_IOCTLSOCKET_CAMEL
 CURL_CHECK_FUNC_MEMRCHR
@@ -3588,7 +3587,6 @@ AC_CHECK_FUNCS([\
   arc4random \
   fchmod \
   fnmatch \
-  fork \
   fseeko \
   geteuid \
   getpass_r \

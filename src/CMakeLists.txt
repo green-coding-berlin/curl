@@ -22,6 +22,7 @@
 #
 ###########################################################################
 set(EXE_NAME curl)
+add_definitions(-DBUILDING_CURL)
 
 if(USE_MANUAL)
   # Use the C locale to ensure that only ASCII characters appear in the
@@ -67,10 +68,11 @@ if(BUILD_STATIC_CURL)
   set(CURLX_CFILES ${CURLTOOL_LIBCURL_CFILES})
 endif()
 
-# Compile this source separately to avoid having `stderr` overridden in this
-# file. Necessary for successfully initializing stderr in unity builds.
-# (Not necessary for the libcurltool target.)
-set_source_files_properties(tool_stderr.c PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
+if(ENABLE_CURLDEBUG)
+  # We must compile this source separately to avoid memdebug.h redefinitions
+  # applying to them.
+  set_source_files_properties(../lib/curl_multibyte.c PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
+endif()
 
 add_executable(
   ${EXE_NAME}

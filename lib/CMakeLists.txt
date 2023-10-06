@@ -56,9 +56,9 @@ add_library(
 target_compile_definitions(curlu PUBLIC UNITTESTS CURL_STATICLIB)
 
 if(ENABLE_CURLDEBUG)
-  # We must compile memdebug.c separately to avoid memdebug.h redefinitions
-  # being applied to memdebug.c itself.
-  set_source_files_properties(memdebug.c PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
+  # We must compile these sources separately to avoid memdebug.h redefinitions
+  # applying to them.
+  set_source_files_properties(memdebug.c curl_multibyte.c PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
 endif()
 target_link_libraries(curlu PRIVATE ${CURL_LIBS})
 
@@ -83,19 +83,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL "AIX" OR
   set(CMAKEVERSION "${CMAKESONAME}.${VERSIONDEL}.${VERSIONADD}")
 else()
   unset(CMAKESONAME)
-endif()
-
-if(NOT WIN32 AND NOT CMAKE_CROSSCOMPILING)
-  # on not-Windows and not-crosscompiling, check for writable argv[]
-    include(CheckCSourceRuns)
-    check_c_source_runs("
-int main(int argc, char **argv)
-{
-  (void)argc;
-  argv[0][0] = ' ';
-  return (argv[0][0] == ' ')?0:1;
-}"
-      HAVE_WRITABLE_ARGV)
 endif()
 
 ## Library definition
