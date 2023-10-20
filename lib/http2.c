@@ -107,14 +107,14 @@ static int populate_settings(nghttp2_settings_entry *iv,
   return 3;
 }
 
-static size_t populate_binsettings(uint8_t *binsettings,
-                                   struct Curl_easy *data)
+static ssize_t populate_binsettings(uint8_t *binsettings,
+                                    struct Curl_easy *data)
 {
   nghttp2_settings_entry iv[H2_SETTINGS_IV_LEN];
   int ivlen;
 
   ivlen = populate_settings(iv, data);
-  /* this returns number of bytes it wrote */
+  /* this returns number of bytes it wrote or a negative number on error. */
   return nghttp2_pack_settings_payload(binsettings, H2_BINSETTINGS_LEN,
                                        iv, ivlen);
 }
@@ -452,9 +452,14 @@ static CURLcode cf_h2_ctx_init(struct Curl_cfilter *cf,
      * in the H1 request and we upgrade from there. This stream
      * is opened implicitly as #1. */
     uint8_t binsettings[H2_BINSETTINGS_LEN];
-    size_t  binlen; /* length of the binsettings data */
+    ssize_t binlen; /* length of the binsettings data */
 
     binlen = populate_binsettings(binsettings, data);
+    if(binlen <= 0) {
+      failf(data, "nghttp2 unexpectedly failed on pack_settings_payload");
+      result = CURLE_FAILED_INIT;
+      goto out;
+    }
 
     result = http2_data_setup(cf, data, &stream);
     if(result)
@@ -1621,7 +1626,7 @@ CURLcode Curl_http2_request_upgrade(struct dynbuf *req,
   size_t blen;
   struct SingleRequest *k = &data->req;
   uint8_t binsettings[H2_BINSETTINGS_LEN];
-  size_t  binlen; /* length of the binsettings data */
+  ssize_t binlen; /* length of the binsettings data */
 
   binlen = populate_binsettings(binsettings, data);
   if(binlen <= 0) {
@@ -1688,7 +1693,7 @@ static ssize_t http2_handle_stream_close(struct Curl_cfilter *cf,
                 "connection", stream->id);
     connclose(cf->conn, "REFUSED_STREAM"); /* don't use this anymore */
     data->state.refused_stream = TRUE;
-    *err = CURLE_SEND_ERROR; /* trigger Curl_retry_request() later */
+    *err = CURLE_RECV_ERROR; /* trigger Curl_retry_request() later */
     return -1;
   }
   else if(stream->error != NGHTTP2_NO_ERROR) {

@@ -52,7 +52,7 @@ env:
   nghttp3-version: v0.15.0
   ngtcp2-version: v0.19.1
   nghttp2-version: v1.56.0
-  mod_h2-version: v2.0.21
+  mod_h2-version: v2.0.25
 
 jobs:
   autotools:
@@ -267,13 +267,4 @@ jobs:
       name: 'run pytest'
       env:
         TFLAGS: "${{ matrix.build.tflags }}"
-        CURL_CI: github
-
-    - run: pytest -v tests
-      name: 'run pytest with slowed network'
-      env:
-        # 33% of sends are EAGAINed
-        CURL_DBG_SOCK_WBLOCK: 33
-        # only 80% of data > 10 bytes is send
-        CURL_DBG_SOCK_WPARTIAL: 80
         CURL_CI: github

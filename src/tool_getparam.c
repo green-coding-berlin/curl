@@ -826,8 +826,9 @@ ParameterError getparameter(const char *flag, /* f or -long-flag */
       struct curlx_dynbuf nbuf;
       bool replaced;
 
-      if(aliases[hit].desc != ARG_STRING) {
-        /* --expand on an option that isn't a string */
+      if((aliases[hit].desc != ARG_STRING) &&
+         (aliases[hit].desc != ARG_FILENAME)) {
+        /* --expand on an option that isn't a string or a filename */
         err = PARAM_EXPAND_ERROR;
         goto error;
       }
@@ -1042,6 +1043,12 @@ ParameterError getparameter(const char *flag, /* f or -long-flag */
             break;
           }
         }
+
+        if(denominator > numerator) {
+          err = PARAM_NUMBER_TOO_LARGE;
+          break;
+        }
+
         global->ms_per_transfer = numerator/denominator;
       }
       break;

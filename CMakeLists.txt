@@ -52,8 +52,6 @@
 #   HAVE_SSL_SET0_WBIO: `SSL_set0_wbio` present in OpenSSL/wolfSSL
 #   HAVE_OPENSSL_SRP: `SSL_CTX_set_srp_username` present in OpenSSL/wolfSSL
 #   HAVE_GNUTLS_SRP: `gnutls_srp_verifier` present in GnuTLS
-#   HAVE_AWSLC: OpenSSL is AWS-LC
-#   HAVE_BORINGSSL: OpenSSL is BoringSSL
 #   HAVE_SSL_CTX_SET_QUIC_METHOD: `SSL_CTX_set_quic_method` present in OpenSSL/wolfSSL
 #   HAVE_QUICHE_CONN_SET_QLOG_FD: `quiche_conn_set_qlog_fd` present in QUICHE
 #   HAVE_ZSTD_CREATEDSTREAM: `ZSTD_createDStream` present in Zstd
@@ -380,7 +378,10 @@ if(ENABLE_THREADED_RESOLVER)
 endif()
 
 # Check for all needed libraries
-check_library_exists_concat("socket" connect      HAVE_LIBSOCKET)
+check_library_exists("socket" "connect" "" HAVE_LIBSOCKET)
+if(HAVE_LIBSOCKET)
+  set(CURL_LIBS "socket;${CURL_LIBS}")
+endif()
 
 check_function_exists(gethostname HAVE_GETHOSTNAME)
 
@@ -670,7 +671,7 @@ if(USE_NGTCP2)
   if(USE_OPENSSL OR USE_WOLFSSL)
     if(USE_WOLFSSL)
       find_package(NGTCP2 REQUIRED wolfSSL)
-    elseif(HAVE_BORINGSSL)
+    elseif(HAVE_BORINGSSL OR HAVE_AWSLC)
       find_package(NGTCP2 REQUIRED BoringSSL)
     else()
       find_package(NGTCP2 REQUIRED quictls)
@@ -687,9 +688,7 @@ if(USE_NGTCP2)
     if(NOT HAVE_SSL_CTX_SET_QUIC_METHOD)
       message(FATAL_ERROR "QUIC support is missing in OpenSSL/LibreSSL/BoringSSL/wolfSSL. Try setting -DOPENSSL_ROOT_DIR")
     endif()
-
   elseif(USE_GNUTLS)
-    # TODO add GnuTLS support as vtls library.
     find_package(NGTCP2 REQUIRED GnuTLS)
   else()
     message(FATAL_ERROR "ngtcp2 requires OpenSSL, wolfSSL or GnuTLS")
@@ -755,8 +754,12 @@ if(NOT CURL_DISABLE_LDAP)
   if(NOT USE_WIN32_LDAP)
     # Check for LDAP
     set(CMAKE_REQUIRED_LIBRARIES ${OPENSSL_LIBRARIES})
-    check_library_exists_concat(${CMAKE_LDAP_LIB} ldap_init HAVE_LIBLDAP)
-    check_library_exists_concat(${CMAKE_LBER_LIB} ber_init HAVE_LIBLBER)
+    check_library_exists("${CMAKE_LDAP_LIB}" "ldap_init" "" HAVE_LIBLDAP)
+    if(HAVE_LIBLDAP)
+      check_library_exists("${CMAKE_LDAP_LIB};${CMAKE_LBER_LIB}" "ber_init" "" HAVE_LIBLBER)
+    else()
+      check_library_exists("${CMAKE_LBER_LIB}" "ber_init" "" HAVE_LIBLBER)
+    endif()
 
     set(CMAKE_REQUIRED_INCLUDES_BAK ${CMAKE_REQUIRED_INCLUDES})
     set(CMAKE_LDAP_INCLUDE_DIR "" CACHE STRING "Path to LDAP include directory")
@@ -795,8 +798,10 @@ if(NOT CURL_DISABLE_LDAP)
 
       list(APPEND CMAKE_REQUIRED_DEFINITIONS -DLDAP_DEPRECATED=1)
       list(APPEND CMAKE_REQUIRED_LIBRARIES ${CMAKE_LDAP_LIB})
+      set(CURL_LIBS "${CMAKE_LDAP_LIB};${CURL_LIBS}")
       if(HAVE_LIBLBER)
         list(APPEND CMAKE_REQUIRED_LIBRARIES ${CMAKE_LBER_LIB})
+        set(CURL_LIBS "${CMAKE_LBER_LIB};${CURL_LIBS}")
       endif()
 
       check_c_source_compiles("
@@ -843,7 +848,10 @@ endif()
 # Check for idn2
 option(USE_LIBIDN2 "Use libidn2 for IDN support" ON)
 if(USE_LIBIDN2)
-  check_library_exists_concat("idn2" idn2_lookup_ul HAVE_LIBIDN2)
+  check_library_exists("idn2" "idn2_lookup_ul" "" HAVE_LIBIDN2)
+  if(HAVE_LIBIDN2)
+    set(CURL_LIBS "idn2;${CURL_LIBS}")
+  endif()
 else()
   set(HAVE_LIBIDN2 OFF)
 endif()
@@ -1552,8 +1560,9 @@ _add_if("HTTPS-proxy"   SSL_ENABLED AND (USE_OPENSSL OR USE_GNUTLS
                         OR USE_SCHANNEL OR USE_RUSTLS OR USE_BEARSSL OR
                         USE_MBEDTLS OR USE_SECTRANSP))
 _add_if("unicode"       ENABLE_UNICODE)
-_add_if("threadsafe"    HAVE_ATOMIC OR (WIN32 AND
-                        HAVE_WIN32_WINNT GREATER_EQUAL 0x600))
+_add_if("threadsafe"    HAVE_ATOMIC OR
+                        (USE_THREADS_POSIX AND HAVE_PTHREAD_H) OR
+                        (WIN32 AND HAVE_WIN32_WINNT GREATER_EQUAL 0x600))
 _add_if("PSL"           USE_LIBPSL)
 string(REPLACE ";" " " SUPPORT_FEATURES "${_items}")
 message(STATUS "Enabled features: ${SUPPORT_FEATURES}")
