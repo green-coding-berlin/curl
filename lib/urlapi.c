@@ -1224,14 +1224,14 @@ static CURLUcode parseurl(const char *url, CURLU *u, unsigned int flags)
       if(flags & CURLU_URLENCODE) {
         struct dynbuf enc;
         Curl_dyn_init(&enc, CURL_MAX_INPUT_LENGTH);
-        if(urlencode_str(&enc, fragment + 1, fraglen, TRUE, FALSE)) {
+        if(urlencode_str(&enc, fragment + 1, fraglen - 1, TRUE, FALSE)) {
           result = CURLUE_OUT_OF_MEMORY;
           goto fail;
         }
         u->fragment = Curl_dyn_ptr(&enc);
       }
       else {
-        u->fragment = Curl_memdup(fragment + 1, fraglen);
+        u->fragment = Curl_strndup(fragment + 1, fraglen - 1);
         if(!u->fragment) {
           result = CURLUE_OUT_OF_MEMORY;
           goto fail;
@@ -1260,12 +1260,11 @@ static CURLUcode parseurl(const char *url, CURLU *u, unsigned int flags)
         u->query = Curl_dyn_ptr(&enc);
       }
       else {
-        u->query = Curl_memdup(query + 1, qlen);
+        u->query = Curl_strndup(query + 1, qlen - 1);
         if(!u->query) {
           result = CURLUE_OUT_OF_MEMORY;
           goto fail;
         }
-        u->query[qlen - 1] = 0;
       }
     }
     else {
@@ -1295,12 +1294,11 @@ static CURLUcode parseurl(const char *url, CURLU *u, unsigned int flags)
   }
   else {
     if(!u->path) {
-      u->path = Curl_memdup(path, pathlen + 1);
+      u->path = Curl_strndup(path, pathlen);
       if(!u->path) {
         result = CURLUE_OUT_OF_MEMORY;
         goto fail;
       }
-      u->path[pathlen] = 0;
       path = u->path;
     }
     else if(flags & CURLU_URLENCODE)
@@ -1594,7 +1592,7 @@ CURLUcode curl_url_get(const CURLU *u, CURLUPart what,
   if(ptr) {
     size_t partlen = strlen(ptr);
     size_t i = 0;
-    *part = Curl_memdup(ptr, partlen + 1);
+    *part = Curl_strndup(ptr, partlen);
     if(!*part)
       return CURLUE_OUT_OF_MEMORY;
     if(plusdecode) {
@@ -1902,7 +1900,7 @@ CURLUcode curl_url_set(CURLU *u, CURLUPart what,
     }
     newp = Curl_dyn_ptr(&enc);
 
-    if(appendquery) {
+    if(appendquery && newp) {
       /* Append the 'newp' string onto the old query. Add a '&' separator if
          none is present at the end of the existing query already */
 
@@ -1931,8 +1929,8 @@ nomem:
       }
     }
 
-    if(what == CURLUPART_HOST) {
-      size_t n = strlen(newp);
+    else if(what == CURLUPART_HOST) {
+      size_t n = Curl_dyn_len(&enc);
       if(!n && (flags & CURLU_NO_AUTHORITY)) {
         /* Skip hostname check, it's allowed to be empty. */
       }

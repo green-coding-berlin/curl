@@ -1087,30 +1087,27 @@ if(WIN32)
   # avoid storing HAVE_WIN32_WINNT in CMake cache
   unset(HAVE_WIN32_WINNT CACHE)
 
-  # pre-fill detection results that are based on target OS version
-  if(HAVE_WIN32_WINNT AND (MINGW OR MSVC))
+  if(HAVE_WIN32_WINNT)
     if(HAVE_WIN32_WINNT STRLESS "0x0501")
-      set(HAVE_GETADDRINFO 0)
-      set(HAVE_FREEADDRINFO 0)
-    else()  # Windows XP or newer
-      set(HAVE_GETADDRINFO 1)
-      set(HAVE_FREEADDRINFO 1)
+      # Windows XP is required for freeaddrinfo, getaddrinfo
+      message(FATAL_ERROR "Building for Windows XP or newer is required.")
     endif()
-    unset(HAVE_GETADDRINFO CACHE)
-    unset(HAVE_FREEADDRINFO CACHE)
-    if(HAVE_WIN32_WINNT STRLESS "0x0600")
-      set(HAVE_INET_NTOP 0)
-      set(HAVE_INET_PTON 0)
-    else()  # Windows Vista or newer
-      set(HAVE_INET_NTOP 1)
-      set(HAVE_INET_PTON 1)
+
+    # pre-fill detection results based on target OS version
+    if(MINGW OR MSVC)
+      if(HAVE_WIN32_WINNT STRLESS "0x0600")
+        set(HAVE_INET_NTOP 0)
+        set(HAVE_INET_PTON 0)
+      else()  # Windows Vista or newer
+        set(HAVE_INET_NTOP 1)
+        set(HAVE_INET_PTON 1)
+      endif()
+      unset(HAVE_INET_NTOP CACHE)
+      unset(HAVE_INET_PTON CACHE)
     endif()
-    unset(HAVE_INET_NTOP CACHE)
-    unset(HAVE_INET_PTON CACHE)
   endif()
 endif()
 
-check_include_file_concat("inttypes.h"       HAVE_INTTYPES_H)
 check_include_file_concat("sys/filio.h"      HAVE_SYS_FILIO_H)
 check_include_file_concat("sys/wait.h"       HAVE_SYS_WAIT_H)
 check_include_file_concat("sys/ioctl.h"      HAVE_SYS_IOCTL_H)
@@ -1143,7 +1140,6 @@ check_include_file_concat("poll.h"           HAVE_POLL_H)
 check_include_file_concat("pwd.h"            HAVE_PWD_H)
 check_include_file_concat("stdatomic.h"      HAVE_STDATOMIC_H)
 check_include_file_concat("stdbool.h"        HAVE_STDBOOL_H)
-check_include_file_concat("stdint.h"         HAVE_STDINT_H)
 check_include_file_concat("strings.h"        HAVE_STRINGS_H)
 check_include_file_concat("stropts.h"        HAVE_STROPTS_H)
 check_include_file_concat("termio.h"         HAVE_TERMIO_H)

@@ -32,8 +32,6 @@
 /* see https://www.iana.org/assignments/tls-extensiontype-values/ */
 #define ALPN_HTTP_1_1_LENGTH 8
 #define ALPN_HTTP_1_1 "http/1.1"
-#define ALPN_HTTP_1_0_LENGTH 8
-#define ALPN_HTTP_1_0 "http/1.0"
 #define ALPN_H2_LENGTH 2
 #define ALPN_H2 "h2"
 #define ALPN_H3_LENGTH 2
@@ -168,23 +166,6 @@ struct curl_slist *Curl_none_engines_list(struct Curl_easy *data);
 bool Curl_none_false_start(void);
 void Curl_ssl_adjust_pollset(struct Curl_cfilter *cf, struct Curl_easy *data,
                               struct easy_pollset *ps);
-
-/**
- * Get the ssl_config_data in `data` that is relevant for cfilter `cf`.
- */
-struct ssl_config_data *Curl_ssl_cf_get_config(struct Curl_cfilter *cf,
-                                               struct Curl_easy *data);
-
-/**
- * Get the primary config relevant for the filter from its connection.
- */
-struct ssl_primary_config *
-  Curl_ssl_cf_get_primary_config(struct Curl_cfilter *cf);
-
-/**
- * Get the first SSL filter in the chain starting with `cf`, or NULL.
- */
-struct Curl_cfilter *Curl_ssl_cf_get_ssl(struct Curl_cfilter *cf);
 
 /**
  * Get the SSL filter below the given one or NULL if there is none.
