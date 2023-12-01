@@ -21,22 +21,33 @@
  * SPDX-License-Identifier: curl
  *
  ***************************************************************************/
+#include "test.h"
 
-#ifdef CURL_STATICLIB
-#  define LIBHOSTNAME_EXTERN
-#elif defined(WIN32)
-#  define LIBHOSTNAME_EXTERN  __declspec(dllexport)
-#elif defined(CURL_HIDDEN_SYMBOLS)
-#  define LIBHOSTNAME_EXTERN CURL_EXTERN_SYMBOL
-#else
-#  define LIBHOSTNAME_EXTERN
-#endif
+int test(char *URL)
+{
+  CURL *eh = NULL;
+  int res = 0;
+  struct curl_httppost *lastptr = NULL;
+  struct curl_httppost *m_formpost = NULL;
 
-#ifdef USE_WINSOCK
-#  define FUNCALLCONV __stdcall
-#else
-#  define FUNCALLCONV
-#endif
+  global_init(CURL_GLOBAL_ALL);
 
-LIBHOSTNAME_EXTERN int FUNCALLCONV
-  gethostname(char *name, GETHOSTNAME_TYPE_ARG2 namelen);
+  easy_init(eh);
+
+  easy_setopt(eh, CURLOPT_URL, URL);
+  curl_formadd(&m_formpost, &lastptr, CURLFORM_COPYNAME, "file",
+               CURLFORM_FILE, "missing-file", CURLFORM_END);
+  curl_easy_setopt(eh, CURLOPT_HTTPPOST, m_formpost);
+
+  (void)curl_easy_perform(eh);
+  (void)curl_easy_perform(eh);
+
+test_cleanup:
+
+  curl_formfree(m_formpost);
+
+  curl_easy_cleanup(eh);
+  curl_global_cleanup();
+
+  return res;
+}

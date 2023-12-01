@@ -238,11 +238,20 @@ static CURLcode h3_data_setup(struct Curl_cfilter *cf,
 
 static void h3_data_done(struct Curl_cfilter *cf, struct Curl_easy *data)
 {
+  struct cf_ngtcp2_ctx *ctx = cf->ctx;
   struct h3_stream_ctx *stream = H3_STREAM_CTX(data);
 
   (void)cf;
   if(stream) {
     CURL_TRC_CF(data, cf, "[%"PRId64"] easy handle is done", stream->id);
+    if(ctx->h3conn && !stream->closed) {
+      nghttp3_conn_shutdown_stream_read(ctx->h3conn, stream->id);
+      nghttp3_conn_close_stream(ctx->h3conn, stream->id,
+                                NGHTTP3_H3_REQUEST_CANCELLED);
+      nghttp3_conn_set_stream_user_data(ctx->h3conn, stream->id, NULL);
+      stream->closed = TRUE;
+    }
+
     Curl_bufq_free(&stream->sendbuf);
     Curl_bufq_free(&stream->recvbuf);
     Curl_h1_req_parse_free(&stream->h1);
@@ -1938,7 +1947,7 @@ static CURLcode qng_verify_peer(struct Curl_cfilter *cf,
   if(conn_config->verifyhost) {
 #ifdef USE_OPENSSL
     X509 *server_cert;
-    server_cert = SSL_get_peer_certificate(ctx->ssl);
+    server_cert = SSL_get1_peer_certificate(ctx->ssl);
     if(!server_cert) {
       return CURLE_PEER_FAILED_VERIFICATION;
     }
@@ -2323,10 +2332,12 @@ static CURLcode cf_ngtcp2_data_event(struct Curl_cfilter *cf,
   case CF_CTRL_DATA_PAUSE:
     result = h3_data_pause(cf, data, (arg1 != 0));
     break;
-  case CF_CTRL_DATA_DONE: {
+  case CF_CTRL_DATA_DETACH:
     h3_data_done(cf, data);
     break;
-  }
+  case CF_CTRL_DATA_DONE:
+    h3_data_done(cf, data);
+    break;
   case CF_CTRL_DATA_DONE_SEND: {
     struct h3_stream_ctx *stream = H3_STREAM_CTX(data);
     if(stream && !stream->send_closed) {
@@ -2606,27 +2617,9 @@ out:
      ngtcp2_conn_in_draining_period(ctx->qconn)) {
     /* When a QUIC server instance is shutting down, it may send us a
      * CONNECTION_CLOSE right away. Our connection then enters the DRAINING
-     * state.
-     * This may be a stopping of the service or it may be that the server
-     * is reloading and a new instance will start serving soon.
-     * In any case, we tear down our socket and start over with a new one.
-     * We re-open the underlying UDP cf right now, but do not start
-     * connecting until called again.
-     */
-    int reconn_delay_ms = 200;
-
-    CURL_TRC_CF(data, cf, "connect, remote closed, reconnect after %dms",
-                reconn_delay_ms);
-    Curl_conn_cf_close(cf->next, data);
-    cf_ngtcp2_ctx_clear(ctx);
-    result = Curl_conn_cf_connect(cf->next, data, FALSE, done);
-    if(!result && *done) {
-      *done = FALSE;
-      ctx->reconnect_at = now;
-      ctx->reconnect_at.tv_usec += reconn_delay_ms * 1000;
-      Curl_expire(data, reconn_delay_ms, EXPIRE_QUIC);
-      result = CURLE_OK;
-    }
+     * state. The CONNECT may work in the near future again. Indicate
+     * that as a "weird" reply. */
+    result = CURLE_WEIRD_SERVER_REPLY;
   }
 
 #ifndef CURL_DISABLE_VERBOSE_STRINGS

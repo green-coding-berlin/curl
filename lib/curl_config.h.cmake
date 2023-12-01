@@ -80,6 +80,9 @@
 /* disables GOPHER */
 #cmakedefine CURL_DISABLE_GOPHER 1
 
+/* disables headers-api support */
+#cmakedefine CURL_DISABLE_HEADERS_API 1
+
 /* disables HSTS support */
 #cmakedefine CURL_DISABLE_HSTS 1
 
@@ -173,9 +176,6 @@
 
 /* Define to 1 if you have _Atomic support. */
 #cmakedefine HAVE_ATOMIC 1
-
-/* Define to 1 if you have the `fchmod' function. */
-#cmakedefine HAVE_FCHMOD 1
 
 /* Define to 1 if you have the `fnmatch' function. */
 #cmakedefine HAVE_FNMATCH 1
