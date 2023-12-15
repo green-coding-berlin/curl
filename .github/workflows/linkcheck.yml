@@ -6,21 +6,19 @@ name: Markdown links
 
 on:
   workflow_dispatch:
-  # schedule:
-  #   - cron: '0 1,5 * * *'
   # push:
   #   branches:
-  #   - master
-  #   - '*/ci'
+  #     - master
+  #     - '*/ci'
   #   paths:
-  #   - '.github/workflows/linkcheck.yml'
-  #   - '**.md'
+  #     - '.github/workflows/linkcheck.yml'
+  #     - '**.md'
   # pull_request:
   #   branches:
-  #   - master
+  #     - master
   #   paths:
-  #   - '.github/workflows/linkcheck.yml'
-  #   - '**.md'
+  #     - '.github/workflows/linkcheck.yml'
+  #     - '**.md'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
@@ -33,24 +31,23 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-    - name: Eco-CI Init
-      uses: green-coding-berlin/eco-ci-energy-estimation@v2
-      with:
-        task: start-measurement
+      - name: Eco-CI Init
+        uses: green-coding-berlin/eco-ci-energy-estimation@v2
+        with:
+          task: start-measurement
 
-    - uses: actions/checkout@v4
-    - uses: gaurav-nelson/github-action-markdown-link-check@v1
-      with:
-        use-quiet-mode: 'yes'
+      - uses: actions/checkout@v4
+      - uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
 
-    - name: Eco-CI Measurement
-      uses: green-coding-berlin/eco-ci-energy-estimation@v2
-      with:
-        task: get-measurement
-        label: 'linkcheck'
+      - name: Eco-CI Measurement
+        uses: green-coding-berlin/eco-ci-energy-estimation@v2
+        with:
+          task: get-measurement
+          label: 'linkcheck'
 
-    - name: Eco-CI Results
-      uses: green-coding-berlin/eco-ci-energy-estimation@v2
-      with:
-        task: display-results
-
+      - name: Eco-CI Results
+        uses: green-coding-berlin/eco-ci-energy-estimation@v2
+        with:
+          task: display-results

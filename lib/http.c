@@ -297,7 +297,6 @@ char *Curl_copy_header_value(const char *header)
 {
   const char *start;
   const char *end;
-  char *value;
   size_t len;
 
   /* Find the end of the header name */
@@ -330,14 +329,7 @@ char *Curl_copy_header_value(const char *header)
   /* get length of the type */
   len = end - start + 1;
 
-  value = malloc(len + 1);
-  if(!value)
-    return NULL;
-
-  memcpy(value, start, len);
-  value[len] = 0; /* null-terminate */
-
-  return value;
+  return Curl_memdup0(start, len);
 }
 
 #ifndef CURL_DISABLE_HTTP_AUTH
@@ -4625,17 +4617,17 @@ CURLcode Curl_http_req_make(struct httpreq **preq,
     goto out;
   memcpy(req->method, method, m_len);
   if(scheme) {
-    req->scheme = Curl_strndup(scheme, s_len);
+    req->scheme = Curl_memdup0(scheme, s_len);
     if(!req->scheme)
       goto out;
   }
   if(authority) {
-    req->authority = Curl_strndup(authority, a_len);
+    req->authority = Curl_memdup0(authority, a_len);
     if(!req->authority)
       goto out;
   }
   if(path) {
-    req->path = Curl_strndup(path, p_len);
+    req->path = Curl_memdup0(path, p_len);
     if(!req->path)
       goto out;
   }
