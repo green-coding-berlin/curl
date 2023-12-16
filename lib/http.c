@@ -3888,7 +3888,7 @@ CURLcode Curl_http_statusline(struct Curl_easy *data,
      * fields.  */
     if(data->set.timecondition)
       data->info.timecond = TRUE;
-    /* FALLTHROUGH */
+    FALLTHROUGH();
   case 204:
     /* (quote from RFC2616, section 10.2.5): The server has
      * fulfilled the request but does not need to return an
@@ -4609,7 +4609,7 @@ CURLcode Curl_http_req_make(struct httpreq **preq,
   CURLcode result = CURLE_OUT_OF_MEMORY;
 
   DEBUGASSERT(method);
-  if(m_len + 1 >= sizeof(req->method))
+  if(m_len + 1 > sizeof(req->method))
     return CURLE_BAD_FUNCTION_ARGUMENT;
 
   req = calloc(1, sizeof(*req));
@@ -4765,7 +4765,7 @@ CURLcode Curl_http_req_make2(struct httpreq **preq,
   CURLUcode uc;
 
   DEBUGASSERT(method);
-  if(m_len + 1 >= sizeof(req->method))
+  if(m_len + 1 > sizeof(req->method))
     return CURLE_BAD_FUNCTION_ARGUMENT;
 
   req = calloc(1, sizeof(*req));

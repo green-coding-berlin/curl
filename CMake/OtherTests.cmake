@@ -29,20 +29,15 @@ set(_source_epilogue "#undef inline")
 
 macro(add_header_include check header)
   if(${check})
-    set(_source_epilogue "${_source_epilogue}\n#include <${header}>")
+    set(_source_epilogue "${_source_epilogue}
+      #include <${header}>")
   endif()
 endmacro()
 
-set(signature_call_conv)
-if(HAVE_WINDOWS_H)
-  set(_source_epilogue
-      "${_source_epilogue}\n#ifndef WIN32_LEAN_AND_MEAN\n#define WIN32_LEAN_AND_MEAN\n#endif")
-  add_header_include(HAVE_WINSOCK2_H "winsock2.h")
-  add_header_include(HAVE_WINDOWS_H "windows.h")
-  set(signature_call_conv "PASCAL")
-  if(WIN32)
-    set(CMAKE_REQUIRED_LIBRARIES "ws2_32")
-  endif()
+if(WIN32)
+  set(CMAKE_EXTRA_INCLUDE_FILES "winsock2.h")
+  set(CMAKE_REQUIRED_DEFINITIONS "-DWIN32_LEAN_AND_MEAN")
+  set(CMAKE_REQUIRED_LIBRARIES "ws2_32")
 else()
   add_header_include(HAVE_SYS_TYPES_H "sys/types.h")
   add_header_include(HAVE_SYS_SOCKET_H "sys/socket.h")
@@ -57,7 +52,7 @@ check_c_source_compiles("${_source_epilogue}
     return 0;
   }" HAVE_MSG_NOSIGNAL)
 
-if(NOT HAVE_WINDOWS_H)
+if(NOT WIN32)
   add_header_include(HAVE_SYS_TIME_H "sys/time.h")
 endif()
 check_c_source_compiles("${_source_epilogue}
@@ -70,9 +65,7 @@ int main(void) {
   return 0;
 }" HAVE_STRUCT_TIMEVAL)
 
-if(HAVE_WINDOWS_H)
-  set(CMAKE_EXTRA_INCLUDE_FILES "winsock2.h")
-else()
+if(NOT WIN32)
   set(CMAKE_EXTRA_INCLUDE_FILES)
   if(HAVE_SYS_SOCKET_H)
     set(CMAKE_EXTRA_INCLUDE_FILES "sys/socket.h")
@@ -87,7 +80,7 @@ endif()
 unset(CMAKE_TRY_COMPILE_TARGET_TYPE)
 
 if(NOT CMAKE_CROSSCOMPILING)
-  if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "iOS")
+  if(NOT APPLE)
     # only try this on non-apple platforms
 
     # if not cross-compilation...
@@ -140,8 +133,8 @@ if(WIN32)
   set(HAVE_GETADDRINFO_THREADSAFE ${HAVE_GETADDRINFO})
 elseif(NOT HAVE_GETADDRINFO)
   set(HAVE_GETADDRINFO_THREADSAFE FALSE)
-elseif(CMAKE_SYSTEM_NAME STREQUAL "AIX" OR
-       CMAKE_SYSTEM_NAME STREQUAL "Darwin" OR
+elseif(APPLE OR
+       CMAKE_SYSTEM_NAME STREQUAL "AIX" OR
        CMAKE_SYSTEM_NAME STREQUAL "FreeBSD" OR
        CMAKE_SYSTEM_NAME STREQUAL "HP-UX" OR
        CMAKE_SYSTEM_NAME STREQUAL "MidnightBSD" OR
