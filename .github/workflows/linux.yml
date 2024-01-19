@@ -17,7 +17,7 @@ on:
   #     - '.azure-pipelines.yml'
   #     - '.circleci/**'
   #     - '.cirrus.yml'
-  #     - 'appveyor.yml'
+  #     - 'appveyor.*'
   #     - 'packages/**'
   #     - 'plan9/**'
   #     - 'projects/**'
@@ -30,7 +30,7 @@ on:
   #     - '.azure-pipelines.yml'
   #     - '.circleci/**'
   #     - '.cirrus.yml'
-  #     - 'appveyor.yml'
+  #     - 'appveyor.*'
   #     - 'packages/**'
   #     - 'plan9/**'
   #     - 'projects/**'
@@ -114,7 +114,7 @@ jobs:
           # - name: openssl3-O3
           #   install_packages: zlib1g-dev valgrind
           #   install_steps: gcc-11 openssl3
-          #   configure: CFLAGS=-O3 LDFLAGS="-Wl,-rpath,$HOME/openssl3/lib64" --with-openssl=$HOME/openssl3 --enable-debug --enable-websockets
+          #   configure: CPPFLAGS=-DCURL_WARN_SIGN_CONVERSION CFLAGS=-O3 LDFLAGS="-Wl,-rpath,$HOME/openssl3/lib64" --with-openssl=$HOME/openssl3 --enable-debug --enable-websockets
           #   singleuse: --unit
 
           # - name: openssl3-clang
@@ -157,7 +157,7 @@ jobs:
           #   singleuse: --unit
 
           # - name: rustls
-          #   install_steps: rust rustls pytest valgrind
+          #   install_steps: rust rustls pytest valgrind libpsl-dev
           #   configure: --with-rustls=$HOME/rustls --enable-debug
           #   singleuse: --unit
 
